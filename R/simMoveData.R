@@ -1,6 +1,5 @@
 #Simulate some movement data
 
-
 #' A function to simulate movement data
 #'
 #' This function allows you to simulate movement data, where an individual animal is influenced by an external influence. The strength of this influence can be set by the user.
@@ -73,6 +72,7 @@ simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0
       obs.y = 0
       angle.p <- rvonmises(1,0,0.01)
       initialStepL <- rlnorm(n=1,meanStepLength,sdStepLength)
+      stepL.p <- initialStepL
       obs.x <- obs.x + initialStepL * cos(angle.p) #this is the starting position
       obs.y <- obs.y + initialStepL * sin(angle.p) #this is the starting position
       
@@ -97,10 +97,11 @@ simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0
         stepL <- rlnorm(n=1,meanStepLength,sdStepLength)
         
         #record one row (one observation)
-        simData <- rbind(simData, c(obs_angle, angle.f, angle.m, angle.p, stepL, dist.f, dist.m,i,trackCount,obs.x,obs.y))
+        simData <- rbind(simData, c(obs_angle, angle.f, angle.m, angle.p, stepL, stepL.p, dist.f, dist.m,i,trackCount,obs.x,obs.y))
         
-        #update new previous angle
+        #update new previous angle/step
         angle.p = obs_angle   #this is the previous angle for the next point in the track
+        stepL.p = stepL
         
         #update new position
         obs.x <- obs.x + stepL * cos(obs_angle) #this is the next starting position in the track
