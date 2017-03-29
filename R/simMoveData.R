@@ -143,9 +143,10 @@ plot.simData <- function(simData, max.tracks=5){
 #' @param rangePred Range of observed travel points to predict.
 #' @param numbDraws Number of predictions to make for each observed point.
 #' @param buffer Spatial buffer for the extent of the output plot around observed points. 
+#' @param contours Contours used in the plot of the kernel density of predicted points.
 #' @export
 #' @examples
-postPredMovements <- function(model.fit, df.obs, rangePred=1:10, numbDraws=500, buffer=10){
+postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer=10){
   
   require(ks)
   
@@ -159,7 +160,7 @@ postPredMovements <- function(model.fit, df.obs, rangePred=1:10, numbDraws=500, 
   max.y <- max(df.obs[rangePred,]$y)+buffer
   
   #genrate plot
-  plot(x=one.obs$x,y=one.obs$y, contours=c(25,50,75), xlim=c(min.x,max.x), ylim=c(min.y,max.y))
+  plot(x=one.obs$x,y=one.obs$y, xlim=c(min.x,max.x), ylim=c(min.y,max.y))
   for(i in rangePred) {
     
     one.obs <- df.obs[i,]
