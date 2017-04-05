@@ -4,13 +4,15 @@
 \alias{postPredMovements}
 \title{A function to plot posterior predicitve checks on the model}
 \usage{
-postPredMovements(model.fit, df.obs, rangePred = 1:10, numbDraws = 500,
-  buffer = 10)
+postPredMovements(model.fit, df.obs, contours = c(25, 50, 75),
+  rangePred = 1:10, numbDraws = 500, buffer = 10)
 }
 \arguments{
 \item{model.fit}{stanfit model, containing y_pred and d_pred as generated quantities: y_pred is the model predicted angle, and d_pred is the model predicted step length.}
 
 \item{df.obs}{dataframe of observed travel points.}
+
+\item{contours}{Contours used in the plot of the kernel density of predicted points.}
 
 \item{rangePred}{Range of observed travel points to predict.}
 

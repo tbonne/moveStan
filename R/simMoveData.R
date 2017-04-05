@@ -180,3 +180,62 @@ postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred
   }
   
 }
+
+#' A function to plot posterior predicitve checks on directions of travel
+#'
+#' This function uses samples from the stanfit object to generate predictive directions.
+#' @param model.fit stanfit model, containing a_pred as generated quantities: a_pred is the model predicted angle.
+#' @param df.obs dataframe of observed travel points.
+#' @param rangePred Range of observed travel points to predict.
+#' @param numbDraws Number of predictions to make for each observed point.
+#' @param contours Contours used in the plot of the kernel density of predicted points, if null a raster is produced.
+#' @export
+#' @examples
+postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500){
+  
+  require(ks)
+  
+  #get samples
+  post<-extract(model.fit)
+  
+  if(is.null(contours)){
+    #genrate plot
+    for(i in rangePred) {
+      
+      one.obs <- df.obs[i,]
+      pred.points <- matrix(,numbDraws,2)
+      
+      for(j in 1:numbDraws){
+        predX <- cos(post$a_pred[j,i])*1
+        predY <- sin(post$a_pred[j,i])*1
+        pred.points[j,] <- c(predX,predY) 
+      }
+      
+      ks.pred <- kde(pred.points, binned = T)
+      plot(pred.points[,1],pred.points[,2])
+      plot(ks.pred,display="image",add=T)
+      points(df.obs[i+1,]$dx.obs,df.obs[i+1,]$dy.obs,col="blue") 
+      points(0,0,col="black") 
+      
+    }
+  }else{
+    #genrate plot
+    for(i in rangePred) {
+      
+      one.obs <- df.obs[i,]
+      pred.points <- matrix(,numbDraws,2)
+      
+      for(j in 1:numbDraws){
+        predX <- cos(post$a_pred[j,i])*1
+        predY <- sin(post$a_pred[j,i])*1
+        pred.points[j,] <- c(predX,predY) 
+      }
+      
+      ks.pred <- kde(pred.points, binned = T)
+      plot(ks.pred,display="slice",cont=contours)
+      points(df.obs[i+1,]$dx.obs,df.obs[i+1,]$dy.obs,col="blue") 
+      points(0,0,col="black") 
+      
+    }
+  }
+}
