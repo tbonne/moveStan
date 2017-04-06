@@ -189,15 +189,24 @@ postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred
 #' @param rangePred Range of observed travel points to predict.
 #' @param numbDraws Number of predictions to make for each observed point.
 #' @param contours Contours used in the plot of the kernel density of predicted points, if null a raster is produced.
+#' @param buffer Display parameter, used to extend the plot extent range.
+#' @param extention Display parameter, used to define the radius on which to plot predictions for each point.
 #' @export
 #' @examples
-postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500){
+postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer = 10, extention=10){
   
   require(ks)
   
   #get samples
   post<-extract(model.fit)
   
+  #set extent
+  min.x <- min(df.obs[rangePred,]$x)-buffer
+  min.y <- min(df.obs[rangePred,]$y)-buffer
+  max.x <- max(df.obs[rangePred,]$x)+buffer
+  max.y <- max(df.obs[rangePred,]$y)+buffer
+  
+  plot(1,type='n', xlim=c(min.x,max.x), ylim=c(min.y,max.y), xlab="X", ylab="Y")
   if(is.null(contours)){
     #genrate plot
     for(i in rangePred) {
@@ -214,8 +223,8 @@ postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:1
       ks.pred <- kde(pred.points, binned = T)
       plot(pred.points[,1],pred.points[,2])
       plot(ks.pred,display="image",add=T)
-      points(df.obs[i+1,]$dx.obs,df.obs[i+1,]$dy.obs,col="blue") 
-      points(0,0,col="black") 
+      points(df.obs[i+1,]$x,df.obs[i+1,]$y,col="blue") 
+      points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
       
     }
   }else{
@@ -226,15 +235,16 @@ postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:1
       pred.points <- matrix(,numbDraws,2)
       
       for(j in 1:numbDraws){
-        predX <- cos(post$a_pred[j,i])*1
-        predY <- sin(post$a_pred[j,i])*1
+        predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
+        predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
         pred.points[j,] <- c(predX,predY) 
       }
       
       ks.pred <- kde(pred.points, binned = T)
-      plot(ks.pred,display="slice",cont=contours)
-      points(df.obs[i+1,]$dx.obs,df.obs[i+1,]$dy.obs,col="blue") 
-      points(0,0,col="black") 
+      plot(ks.pred,display="slice",cont=contours, add=T)
+      actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
+      points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red") 
+      points(df.obs[i,]$x,df.obs[i,]$y,col="blue") 
       
     }
   }
