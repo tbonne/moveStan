@@ -5,7 +5,7 @@
 \title{A function to plot posterior predicitve checks on directions of travel}
 \usage{
 postPredAngle(model.fit, df.obs, contours = c(25, 50, 75), rangePred = 1:10,
-  numbDraws = 500, buffer = 10, extention = 10)
+  numbDraws = 500, buffer = 10, extention = 10, context = NULL)
 }
 \arguments{
 \item{model.fit}{stanfit model, containing a_pred as generated quantities: a_pred is the model predicted angle.}
@@ -21,6 +21,8 @@ postPredAngle(model.fit, df.obs, contours = c(25, 50, 75), rangePred = 1:10,
 \item{buffer}{Display parameter, used to extend the plot extent range.}
 
 \item{extention}{Display parameter, used to define the radius on which to plot predictions for each point.}
+
+\item{context}{List of shapefiles or rasters that can provide contextual information.}
 }
 \description{
 This function uses samples from the stanfit object to generate predictive directions.
