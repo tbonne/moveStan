@@ -10,63 +10,64 @@
 #' @param influenceRange range in which influence point is randomly assigned. Defaults to 50.
 #' @param EffectStrength strength of influence relative to directional persistance. Defaults to 0.5.
 #' @param bearingSD magnitude of error in directional persistance. Defaults to 5.
-#' @keywords simulation, movement 
+#' @keywords simulation, movement
+#' @import circular
 #' @export
 #' @examples
 #' simulateData()
 
 simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0.25, influenceRange=50, EffectStrength=0.5, bearingSD=5){
-  
+
   ####################
   # 1.) Set parameters
   ####################
-  
+
   #Observations
   N <- nobs                       #number of observations
   J <- 1                          #number of individuals sampled
   K <- ntracks                    #number of observations per track
   tracksPerIndividual <- N/(J*K)  #number of tracks per individual
-  
+
   #define step length distribution
   meanStepLength <- meanStepLength
   sdStepLength <- sdStepLength
-  
+
   #For each track this randomly places an influence point on the landscape)
   DWGCrange = influenceRange
-  
+
   #define beta parameters (effect)
   b_p = 1
-  b_f = EffectStrength 
+  b_f = EffectStrength
   b_m = 0
-  
+
   #uncertainty (error) around observed angle of travel
   kappa_move = bearingSD #larger number lower uncertanty
-  
+
   #define individual variation around beta parameters (i.e., individuals respond differently to influences)
   ind_f <- rnorm(J,0,0.0)
   ind_m <- rnorm(J,0,0.0)
-  
+
   #could add a distance beyond which the influence does not play a role...
   #maxDist = 10
-  
-  
+
+
   ####################
   # 2.) Generate data
   ####################
-  
+
   simData <- data.frame()
   trackCount=1
-  
+
   for(i in 1:J){  #for each individual
-    
+
     for(l in 1:tracksPerIndividual){ #for each track
-      
-      ##generate static influence points for alternative influencing factors (only two for now, and fixed with a track) 
+
+      ##generate static influence points for alternative influencing factors (only two for now, and fixed with a track)
       f.x <- runif(n=1,min=-DWGCrange,max=DWGCrange)
       f.y <- runif(n=1,min=-DWGCrange,max=DWGCrange)
       m.x <- runif(n=1,min=-DWGCrange,max=DWGCrange)
       m.y <- runif(n=1,min=-DWGCrange,max=DWGCrange)
-      
+
       ##individual always starts one step off of 0,0 moving in a random direction
       obs.x = 0
       obs.y = 0
@@ -75,43 +76,43 @@ simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0
       stepL.p <- initialStepL
       obs.x <- obs.x + initialStepL * cos(angle.p) #this is the starting position
       obs.y <- obs.y + initialStepL * sin(angle.p) #this is the starting position
-      
+
       for(t in 1:K){ #for each observation within a track
-        
+
         #calculate angles to DWCG
         angle.f <- atan2(f.y-obs.y,f.x-obs.x)
         angle.m <- atan2(m.y-obs.y,m.x-obs.x)
-        
+
         #calculate distance to DWCG
         dist.f <- (((f.y-obs.y)^2)+((f.x-obs.x)^2))^0.5
         dist.m <- (((m.y-obs.y)^2)+((m.x-obs.x)^2))^0.5
-        
-        #calculate next angle of travel based on beta values 
-        mean_angle <- atan2(b_p*sin(angle.p)+(b_f+ind_f[i])*sin(angle.f)+(b_m+ind_f[i])*sin(angle.m), b_p*cos(angle.p)+(b_f+ind_f[i])*cos(angle.f)+(b_m+ind_m[i])*cos(angle.m)) 
-        
+
+        #calculate next angle of travel based on beta values
+        mean_angle <- atan2(b_p*sin(angle.p)+(b_f+ind_f[i])*sin(angle.f)+(b_m+ind_f[i])*sin(angle.m), b_p*cos(angle.p)+(b_f+ind_f[i])*cos(angle.f)+(b_m+ind_m[i])*cos(angle.m))
+
         #calculate observed angle of travel (mean + uncertainty)
         obs_angle <- rvonmises(1,mean_angle,kappa_move)
         if(obs_angle>pi)obs_angle=obs_angle-2*pi #keep the scale as -pi to +pi to match atan2
-        
+
         #calculate step length
         stepL <- rlnorm(n=1,meanStepLength,sdStepLength)
-        
+
         #record one row (one observation)
         simData <- rbind(simData, c(obs_angle, angle.f, angle.m, angle.p, stepL, stepL.p, dist.f, dist.m,i,trackCount,obs.x,obs.y))
-        
+
         #update new previous angle/step
         angle.p = obs_angle   #this is the previous angle for the next point in the track
         stepL.p = stepL
-        
+
         #update new position
         obs.x <- obs.x + stepL * cos(obs_angle) #this is the next starting position in the track
         obs.y <- obs.y + stepL * sin(obs_angle) #this is the next starting position in the track
-        
+
       }
       trackCount=trackCount+1
     }
   }
-  
+
   names(simData)<-c("obs_angle", "angle.f", "angle.m", "angle.p","stepL","stepL.p", "dist.f", "dist.m","ID","track","x","y")
   return (simData)
 }
@@ -122,184 +123,18 @@ simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0
 #' This function is just a convient way to plot the simulated data.
 #' @param simData data generated by simulateData.
 #' @param max.tracks limits the plots to tracks below this number.
+#' @import ggplot2
 #' @export
 #' @examples
 
-plot.simData <- function(simData, max.tracks=5){
-  
-  library(ggplot2)
+simData.plot <- function(simData, max.tracks=5){
+
   sub.data <- subset(simData,simData$track<=max.tracks)
   ggplot(sub.data, aes(x,y))+geom_point()+geom_path()+facet_grid(. ~ factor(track))
-  
+
 }
 
 
 
-#' A function to plot posterior predicitve checks on the model
-#'
-#' This function uses samples from the stanfit object to generate predictive regions in 2d.
-#' @param model.fit stanfit model, containing y_pred and d_pred as generated quantities: y_pred is the model predicted angle, and d_pred is the model predicted step length.
-#' @param df.obs dataframe of observed travel points.
-#' @param rangePred Range of observed travel points to predict.
-#' @param numbDraws Number of predictions to make for each observed point.
-#' @param buffer Spatial buffer for the extent of the output plot around observed points. 
-#' @param contours Contours used in the plot of the kernel density of predicted points.
-#' @export
-#' @examples
-postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer=10){
-  
-  require(ks)
-  
-  #get samples
-  post<-extract(model.fit)
-  
-  #set extent
-  min.x <- min(df.obs[rangePred,]$x)-buffer
-  min.y <- min(df.obs[rangePred,]$y)-buffer
-  max.x <- max(df.obs[rangePred,]$x)+buffer
-  max.y <- max(df.obs[rangePred,]$y)+buffer
-  
-  #genrate plot
-  plot(x=one.obs$x,y=one.obs$y, xlim=c(min.x,max.x), ylim=c(min.y,max.y))
-  for(i in rangePred) {
-    
-    one.obs <- df.obs[i,]
-    pred.points <- matrix(,numbDraws,2)
-    
-    for(j in 1:numbDraws){
-      predX <- one.obs$x + cos(post$y_pred[j,i])*post$d_pred[i,j]
-      predY <- one.obs$y + sin(post$y_pred[j,i])*post$d_pred[i,j]
-      pred.points[j,] <- c(predX,predY) 
-    }
-    
-    ks.pred <- kde(pred.points, binned = T)
-    plot(ks.pred,display="slice",cont=contours,add=T)
-    points(df.obs[i+1,]$x,df.obs[i+1,]$y,col="green") 
-    points(df.obs[i,]$x,df.obs[i,]$y,col="blue") 
-    
-  }
-  
-}
 
-#' A function to plot posterior predicitve checks on directions of travel
-#'
-#' This function uses samples from the stanfit object to generate predictive directions.
-#' @param model.fit stanfit model, containing a_pred as generated quantities: a_pred is the model predicted angle.
-#' @param df.obs dataframe of observed travel points.
-#' @param rangePred Range of observed travel points to predict.
-#' @param numbDraws Number of predictions to make for each observed point.
-#' @param contours Contours used in the plot of the kernel density of predicted points, if null a raster is produced.
-#' @param buffer Display parameter, used to extend the plot extent range.
-#' @param extention Display parameter, used to define the radius on which to plot predictions for each point.
-#' @param context List of shapefiles or rasters that can provide contextual information.
-#' @export
-#' @examples
-postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer = 10, extention=10, context = NULL){
-  
-  require(ks)
-  
-  #get samples
-  post<-extract(model.fit)
-  
-  if(is.null(context)){        ### no contextual information given
-    #set extent
-    min.x <- min(df.obs[rangePred,]$x)-buffer
-    min.y <- min(df.obs[rangePred,]$y)-buffer
-    max.x <- max(df.obs[rangePred,]$x)+buffer
-    max.y <- max(df.obs[rangePred,]$y)+buffer
-    
-    plot(1,type='n', xlim=c(min.x,max.x), ylim=c(min.y,max.y), xlab="X", ylab="Y")
-    if(is.null(contours)){    ### raster based density
-      #genrate plot
-      for(i in rangePred) {
-        
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
-        
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY) 
-        }
-        
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="image",add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="green") 
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-        
-      }
-    }else{
-      #genrate plot
-      for(i in rangePred) {   ### contour based density
-        
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
-        
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY) 
-        }
-        
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="slice",cont=contours, add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red") 
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue") 
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-        
-      }
-    }
-  } else {  #### contextual information given
-    
-    
-    plot(contextList[[1]], xlab="X", ylab="Y")
-    for (l in 1:length(contextList)){
-      plot(contextList[[l]], xlab="X", ylab="Y", add=T)
-    }
-    if(is.null(contours)){
-      #genrate plot
-      for(i in rangePred) {
-        
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
-        
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY) 
-        }
-        
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="image",add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="green") 
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-        
-      }
-    }else{
-      #genrate plot
-      for(i in rangePred) {
-        
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
-        
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY) 
-        }
-        
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="slice",cont=contours, add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red") 
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue") 
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-      }
-    }
-  }
-}
+

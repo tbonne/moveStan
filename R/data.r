@@ -17,4 +17,4 @@
 #'   \item y: y coordinate (UTM34S WGS84)
 #'   \item iid: sum of the inter-individual distances from the focal animal
 #' }
-"move1"
+#'"tradjectoryOUT_id1"

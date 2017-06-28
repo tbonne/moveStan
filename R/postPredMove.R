@@ -1,29 +1,16 @@
-
-
-#' A function to fit movement models using rStan
+#' A function to plot posterior predicitve checks on the model
 #'
-#' This function fits standard movement models using rstan to observed movement data. STOPPED HERE
-#' @param modelList A list of stanfit models.
+#' This function uses samples from the stanfit object to generate predictive regions in 2d.
+#' @param model.fit stanfit model, containing y_pred and d_pred as generated quantities: y_pred is the model predicted angle, and d_pred is the model predicted step length.
+#' @param df.obs dataframe of observed travel points.
+#' @param rangePred Range of observed travel points to predict.
+#' @param numbDraws Number of predictions to make for each observed point.
+#' @param buffer Spatial buffer for the extent of the output plot around observed points.
+#' @param contours Contours used in the plot of the kernel density of predicted points.
+#' @import ks
 #' @export
 #' @examples
-simMovements <- function(modelList, iter=100, startingContext= c(0,0), names=c("x","y"),formula="a ~ beta_cv * cv", functionList = NULL){
-
-  postList <- list(extract(fit.groupOnly))
-
-  df.sim <- as.data.frame(t(startingContext))
-
-  #for each iteration
-  for(i in iter){
-
-    #for each model
-    for (j in length(postList)){
-
-      postList[[1]]
-
-    }
-
-
-  }
+postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer=10){
 
   #get samples
   post<-extract(model.fit)
