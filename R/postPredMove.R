@@ -10,6 +10,9 @@
 #' @import ks
 #' @export
 #' @examples
+#'
+#'
+
 postPredMovements <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer=10){
 
   #get samples
