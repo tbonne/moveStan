@@ -13,7 +13,11 @@
 #' @import rstan
 #' @export
 #' @examples
+<<<<<<< HEAD
 #'library(rstan)
+=======
+#'
+>>>>>>> affdc19a7ffd9e8bb4deb933d28103a0c43ca415
 #'
 #'#'#################################
 #'#   Get data ready for rStan    #
