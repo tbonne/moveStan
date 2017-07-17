@@ -1,11 +1,18 @@
 
 
+
+
+
+
+
 #' A function to fit movement models using rStan
 #'
 #' This function fits standard movement models using rstan to observed movement data. STOPPED HERE
 #' @param modelList A list of stanfit models.
 #' @export
 #' @examples
+#'
+#'
 simMovements <- function(modelList, iter=100, startingContext= c(0,0), names=c("x","y"),formula="a ~ beta_cv * cv", functionList = NULL){
 
   postList <- list(extract(fit.groupOnly))

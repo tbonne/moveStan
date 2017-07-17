@@ -13,3 +13,7 @@ simMovements(modelList, iter = 100, startingContext = c(0, 0),
 \description{
 This function fits standard movement models using rstan to observed movement data. STOPPED HERE
 }
+\examples{
+
+
+}

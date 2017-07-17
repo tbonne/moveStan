@@ -15,7 +15,8 @@
 #' @export
 #' @examples
 #' simulateData()
-
+#'
+#'
 simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0.25, influenceRange=50, EffectStrength=0.5, bearingSD=5){
 
   ####################
@@ -126,6 +127,10 @@ simulateData <- function(nobs=1000, ntracks=10, meanStepLength=2, sdStepLength=0
 #' @import ggplot2
 #' @export
 #' @examples
+#' sim.df <- simulateData()
+#' simData.plot(sim.df)
+#'
+#'
 
 simData.plot <- function(simData, max.tracks=5){
 

@@ -23,3 +23,7 @@ postPredMovements(model.fit, df.obs, contours = c(25, 50, 75),
 \description{
 This function uses samples from the stanfit object to generate predictive regions in 2d.
 }
+\examples{
+
+
+}

@@ -27,3 +27,129 @@ postPredAngle(model.fit, df.obs, contours = c(25, 50, 75), rangePred = 1:10,
 \description{
 This function uses samples from a stanfit object to generate predictive checks on directions of travel.
 }
+\examples{
+library(rstan)
+
+#'#################################
+#   Get data ready for rStan    #
+#################################
+
+focalBaboon[is.na(focalBaboon)]<-0
+
+data.for.stan<-list(N =  nrow(focalBaboon),
+ax = focalBaboon$dx.obs,
+ay = focalBaboon$dy.obs,
+bx=focalBaboon$dx.bearing,
+by=focalBaboon$dy.bearing,
+ax_cv=focalBaboon$dx.resultant,
+ay_cv=focalBaboon$dy.resultant,
+ax0=focalBaboon$dx.0,
+ax1=focalBaboon$dx.1,
+ay0=focalBaboon$dy.0,
+ay1=focalBaboon$dy.1)
+
+
+#################################
+#   Define rStan model          #
+#################################
+
+stan.model.test = '
+data{
+int<lower = 0> N;    //number of data points
+
+vector[N] ax;        //displacement of observed travel
+vector[N] ay;        //displacement of observed travel
+vector[N] bx;        //displacement of previous travel
+vector[N] by;        //displacement of previous travel
+
+vector[N] ax_cv;      //X component of unit vector towards group
+vector[N] ay_cv;      //Y component of unit vector towards group
+
+vector[N] ax0;        //X component of unit vector towards individual 0
+vector[N] ay0;        //Y component of unit vector towards individual 0
+vector[N] ax1;        //X component of unit vector towards individual 1
+vector[N] ay1;        //Y component of unit vector towards individual 1
+
+}
+
+transformed data{
+
+vector[N] a;
+
+//set observed angle of travel
+for(i in 1:N){
+a[i] = atan2(ay[i],ax[i]);
+}
+
+}
+
+parameters{
+
+//These are the parameters to be estimated for angle of travel
+real<lower = 0> kappa;
+real beta_cv;
+real beta_a0;
+real beta_a1;
+
+}
+
+model{
+
+vector[N] y_hat;
+
+//setting our priors for betas
+kappa ~ normal(0,10);
+beta_cv ~ normal(0,1);
+beta_a0 ~ normal(0,1);
+beta_a1 ~ normal(0,1);
+
+//running the model
+for(i in 1:N){
+
+//estimating angle of travel
+y_hat[i] = atan2( by[i] + beta_cv*ay_cv[i] + beta_a0*ay0[i] + beta_a1*ay1[i], bx[i] + beta_cv*ax_cv[i] + beta_a0*ax0[i] + beta_a1*ax1[i]);
+
+}
+
+//likelihood
+a ~ von_mises(y_hat, kappa);
+}
+
+generated quantities{
+
+//generate log-likelihood for observations & predictions
+vector[N] log_lik;
+vector[N] a_pred;
+
+for(i in 1:N){
+
+a_pred[i] = von_mises_rng(atan2( by[i] + beta_cv*ay_cv[i], bx[i] + beta_cv*ax_cv[i] ),kappa);
+
+log_lik[i] = von_mises_lpdf(a[i]|atan2( by[i] + beta_cv*ay_cv[i], bx[i] + beta_cv*ax_cv[i] ),kappa);
+
+}
+}
+'
+
+#################################
+#   Fit the model               #
+#################################
+
+fit.1 = stan(model_code = stan.model.test, data = data.for.stan, iter=1000, chains=1, cores=1)
+
+#################################
+#   Check model fit             #
+#################################
+
+print(fit.1, digits = 4, pars=c("kappa","beta_cv","beta_a0","beta_a1"))
+#launch_shinystan(fit.1)
+
+
+#################################
+# Posterior predictive checks   #
+#################################
+
+postPredAngle(fit.1, focalBaboon, rangePred=1:10)
+
+
+}

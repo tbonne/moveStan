@@ -14,3 +14,9 @@ simData.plot(simData, max.tracks = 5)
 \description{
 This function is just a convient way to plot the simulated data.
 }
+\examples{
+sim.df <- simulateData()
+simData.plot(sim.df)
+
+
+}

@@ -28,6 +28,8 @@ This function allows you to simulate movement data, where an individual animal i
 }
 \examples{
 simulateData()
+
+
 }
 \keyword{movement}
 \keyword{simulation,}
