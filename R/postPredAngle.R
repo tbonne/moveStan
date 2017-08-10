@@ -137,115 +137,76 @@
 #'postPredAngle(fit.1, focalBaboon, rangePred=1:10)
 #'
 #'
-postPredAngle <- function(model.fit, df.obs, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer = 10, extention=10, context = NULL){
+postPredAngle <- function(model.fit, df.obs=NULL, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer = 10, extention=10,angles=NULL){
 
   #get samples
   post<-rstan::extract(model.fit)
 
-  ### no contextual information given
-  if(is.null(context)){
+  #no spatial coordinates given
+  if(is.null(df.obs)){
 
-    #start with an empty plot with set extent
-    min.x <- min(df.obs[rangePred,]$x)-buffer
-    min.y <- min(df.obs[rangePred,]$y)-buffer
-    max.x <- max(df.obs[rangePred,]$x)+buffer
-    max.y <- max(df.obs[rangePred,]$y)+buffer
-    plot(1,type='n', xlim=c(min.x,max.x), ylim=c(min.y,max.y), xlab="X", ylab="Y")
+    #No angles given
+    if(is.null(angles)){
 
+      print("To contrast observed and predicted angles please supply observed angles")
 
-    if(is.null(contours)){    ### raster based density
-      #genrate plot
-      for(i in rangePred) {
-
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
+      for(i in rangePred){
 
         for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
+          predX <- cos(post$a_pred[j,i])*extention
+          predY <- sin(post$a_pred[j,i])*extention
           pred.points[j,] <- c(predX,predY)
         }
 
         ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="image",add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="green")
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-
+        plot(ks.pred,display="slice",cont=contours)
       }
-    }else{
-      #genrate plot
-      for(i in rangePred) {   ### contour based density
 
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
+      #Yes, angles given
+    } else {
+
+      angle.colors<-rainbow(ncol(angles))
+      angle.colors[1]<-"black"
+
+      for(i in rangePred){
 
         for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
+          predX <- cos(post$a_pred[j,i])*extention
+          predY <- sin(post$a_pred[j,i])*extention
           pred.points[j,] <- c(predX,predY)
         }
 
         ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="slice",cont=contours, add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red")
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-
+        plot(ks.pred,display="slice",cont=contours)
+        for(j in 1:ncol(angles)){
+          arrows(x0=0,y0=0,x1=cos(angles[i,j])*extention,y1=sin(angles[i,j])*extention,col=angle.colors[j])
+        }
+        legend("topright", title="Angles", colnames(angles), fill=angle.colors)
       }
     }
 
-  #### contextual information given
+    #Yes, spatial coordinates are given
   } else {
 
+    #genrate plot
+    for(i in rangePred) {
 
-    plot(contextList[[1]], xlab="X", ylab="Y")
-    for (l in 1:length(contextList)){
-      plot(contextList[[l]], xlab="X", ylab="Y", add=T)
-    }
-    if(is.null(contours)){
-      #genrate plot
-      for(i in rangePred) {
+      one.obs <- df.obs[i,]
+      pred.points <- matrix(,numbDraws,2)
 
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
-
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY)
-        }
-
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="image",add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="green")
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-
+      for(j in 1:numbDraws){
+        predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
+        predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
+        pred.points[j,] <- c(predX,predY)
       }
-    }else{
-      #genrate plot
-      for(i in rangePred) {
 
-        one.obs <- df.obs[i,]
-        pred.points <- matrix(,numbDraws,2)
+      ks.pred <- kde(pred.points, binned = T)
+      plot(ks.pred,display="slice",cont=contours, add=T)
+      actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
+      points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red")
+      points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
+      lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
 
-        for(j in 1:numbDraws){
-          predX <- df.obs[i,]$x+cos(post$a_pred[j,i])*extention
-          predY <- df.obs[i,]$y+sin(post$a_pred[j,i])*extention
-          pred.points[j,] <- c(predX,predY)
-        }
-
-        ks.pred <- kde(pred.points, binned = T)
-        plot(ks.pred,display="slice",cont=contours, add=T)
-        actualA <- atan2(df.obs[i+1,]$y-df.obs[i,]$y,df.obs[i+1,]$x-df.obs[i,]$x)
-        points(df.obs[i,]$x+cos(actualA)*extention,df.obs[i,]$y+sin(actualA)*extention,col="red")
-        points(df.obs[i,]$x,df.obs[i,]$y,col="blue")
-        lines(x=c(df.obs[i,]$x,df.obs[i,]$x+cos(actualA)*extention), y=c(df.obs[i,]$y,df.obs[i,]$y+sin(actualA)*extention), type="l", lty="dashed")
-      }
     }
   }
 }
