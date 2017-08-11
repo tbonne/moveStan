@@ -2,6 +2,7 @@
 
 export(postPredAngle)
 export(postPredMovements)
+export(r.squared.angles)
 export(simData.plot)
 export(simMovements)
 export(simulateData)

@@ -4,8 +4,9 @@
 \alias{postPredAngle}
 \title{A function to plot posterior predicitve checks for rStan movement models}
 \usage{
-postPredAngle(model.fit, df.obs, contours = c(25, 50, 75), rangePred = 1:10,
-  numbDraws = 500, buffer = 10, extention = 10, context = NULL)
+postPredAngle(model.fit, df.obs = NULL, contours = c(25, 50, 75),
+  rangePred = 1:10, numbDraws = 500, buffer = 10, extention = 10,
+  angles = NULL)
 }
 \arguments{
 \item{model.fit}{stanfit model, containing a_pred as generated quantities: a_pred is the model predicted angle.}
@@ -28,9 +29,12 @@ postPredAngle(model.fit, df.obs, contours = c(25, 50, 75), rangePred = 1:10,
 This function uses samples from a stanfit object to generate predictive checks on directions of travel.
 }
 \examples{
+
+\dontrun{
+
 library(rstan)
 
-#'#################################
+#################################
 #   Get data ready for rStan    #
 #################################
 
@@ -150,6 +154,6 @@ print(fit.1, digits = 4, pars=c("kappa","beta_cv","beta_a0","beta_a1"))
 #################################
 
 postPredAngle(fit.1, focalBaboon, rangePred=1:10)
-
+}
 
 }

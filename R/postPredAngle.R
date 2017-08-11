@@ -13,6 +13,9 @@
 #' @import rstan
 #' @export
 #' @examples
+#'
+#'\dontrun{
+#'
 #'library(rstan)
 #'
 #'#################################
@@ -135,7 +138,7 @@
 #'#################################
 #'
 #'postPredAngle(fit.1, focalBaboon, rangePred=1:10)
-#'
+#'}
 #'
 postPredAngle <- function(model.fit, df.obs=NULL, contours=c(25,50,75), rangePred=1:10, numbDraws=500, buffer = 10, extention=10,angles=NULL){
 
