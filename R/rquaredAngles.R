@@ -11,7 +11,7 @@
 r.squared.angles <- function(model.fit, obs.angles){
 
   #observed angles
-  obs.a <- as.circular(obs.angles,type="angles",units="radians",modulo="2pi")
+  obs.a <- as.circular(obs.angles,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter',modulo= '2pi')
 
   #generate posterior sampling
   post<-extract(model.fit)
@@ -23,8 +23,8 @@ r.squared.angles <- function(model.fit, obs.angles){
   for(i in 1:postSamples){
     pred.a <- atan2(sin(post$a_pred[i,]),cos(post$a_pred[i,]))
     error.a<- atan2(sin(pred.a-obs.a),cos(pred.a-obs.a))
-    var.est[i,1] <- var.circular(as.circular(pred.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter'))
-    var.error[i,1] <- var.circular(as.circular(error.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter'))
+    var.est[i,1] <- var.circular(as.circular(pred.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter',modulo= '2pi'))
+    var.error[i,1] <- var.circular(as.circular(error.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter',modulo= '2pi'))
   }
 
   #proportion explained vs. total
