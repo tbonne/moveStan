@@ -19,14 +19,17 @@ r.squared.angles <- function(model.fit, obs.angles){
 
   #calculate preditction error at the level of the data point
   var.est <- data.frame(var=rep(0,postSamples))
+  var.error <- data.frame(var=rep(0,postSamples))
   for(i in 1:postSamples){
     pred.a <- atan2(sin(post$a_pred[i,]),cos(post$a_pred[i,]))
     error.a<- atan2(sin(pred.a-obs.a),cos(pred.a-obs.a))
-    var.est[i,1] <- var.circular(as.circular(error.a,type="angles",units="radians", modulo = '2pi'))
+    var.est[i,1] <- var.circular(as.circular(pred.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter'))
+    var.error[i,1] <- var.circular(as.circular(error.a,type="angles",units="radians",template= 'none',zero=0,rotation= 'counter'))
   }
 
   #proportion explained vs. total
-  r.square.simple <- 1-(var.est[,1])/var.circular(obs.a)
+  r.square.simple <- (var.est[,1])/(var.est[,1]+var.error[,1])
+  print(median(r.square.simple))
 
   return(r.square.simple)
 
